@@ -3,8 +3,7 @@ const trycatch = require("trycatch");
 const { LogProvider } = require("../log_nohierarchy/log.provider");
 const { statusHTTP, messageHTTP } = require("../../utils/setting");
 const BaseError = require("../error/BaseError");
-const { PerformanceTracker } = require("../performance/performance.tracker");
-const { endTracking } = require("../performance/Performance.middleware");
+// Đã xóa performance tracking - không còn sử dụng
 class Router {
     constructor() { }
 
@@ -32,15 +31,8 @@ class Router {
             let myfunc = func(req, res);
 
             try {
-                if (req._performanceId) {
-                    PerformanceTracker.checkpoint(req._performanceId, 'Middleware Completed', {
-                        api: apiName
-                    });
-                }
+                // Đã xóa performance tracking - không còn sử dụng
                 myfunc();
-                res.on('finish', () => {
-                    endTracking(req, 'success');
-                });
 
             } catch (err) {
                 res.status(statusHTTP.internalServer);
@@ -48,7 +40,7 @@ class Router {
                 console.log(err);
                 obj.LogAndMessage(res, apiName, { path: "router.trycatch", err: JSON.stringify(err) });
                 res.end();
-                endTracking(req, 'error', err);
+                // Đã xóa performance tracking - không còn sử dụng
                 err = undefined;
                 res = undefined;
                 req = undefined;

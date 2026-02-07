@@ -6,7 +6,7 @@ const { CacheInterface } = require('../redis/cache.interface');
 var initResource = require('../init').init;
 const { algorithm } = require("../functions/functions");
 const _suffixesCount = "_count";
-const { track } = require('../performance/helper');
+// Đã xóa performance tracking - không còn sử dụng
 const generateDBname = function (dbname_prefix, dbname) {
     if (dbname_prefix) {
         return dbname_prefix + dbname;
@@ -855,7 +855,7 @@ class MongoDBInterface {
         query.filter = query.filter || {};
         query.top = query.top || MongoDBConst.limitItem;
     
-        const _performanceId = query._performanceId;
+        // Đã xóa performance tracking - không còn sử dụng
     
         if (query.unlimited) {
             query.top = 0;
@@ -865,13 +865,6 @@ class MongoDBInterface {
         let subCache = query.subCache || "";
     
         // ========= Try cache =========
-        if (_performanceId) {
-            await track(
-                { _performanceId },
-                `Start get Cache for load collection ${query.collection}`
-            );
-        }
-    
         try {
             const resCache = await CacheInterface.get(
                 generateDBname(dbname_prefix, dbname),
@@ -885,28 +878,10 @@ class MongoDBInterface {
                 }
             );
     
-            if (_performanceId) {
-                await track(
-                    { _performanceId },
-                    `Success get Cache for load collection ${query.collection}`
-                );
-            }
-    
             return resCache;
         } catch (cacheErr) {
             
-            // ========= STEP 3: Cache miss → DB =========
-            if (_performanceId) {
-                await track(
-                    { _performanceId },
-                    `Failed get Cache for load collection ${query.collection}`
-                );
-                await track(
-                    { _performanceId },
-                    `Start get DB for load collection ${query.collection}`
-                );
-            }
-    
+            // ========= Cache miss → DB =========
             try {
                 const res = await MongoDBCore.load(
                     initResource
@@ -914,17 +889,6 @@ class MongoDBInterface {
                         .db(generateDBname(dbname_prefix, dbname)),
                     query
                 );
-    
-                if (_performanceId) {
-                    await track(
-                        { _performanceId },
-                        `Completed get DB for load collection ${query.collection}`
-                    );
-                    await track(
-                        { _performanceId },
-                        `Start put Cache for load collection ${query.collection}`
-                    );
-                }
     
                 try {
                     await CacheInterface.put(
@@ -939,22 +903,8 @@ class MongoDBInterface {
                         },
                         res
                     );
-    
-                    if (_performanceId) {
-                        await track(
-                            { _performanceId },
-                            `Success put Cache for load collection ${query.collection}`
-                        );
-                    }
                 } catch (putCacheErr) {
-
-                    if (_performanceId) {
-                        await track(
-                            { _performanceId },
-                            `Failed put Cache for load collection ${query.collection}`
-                        );
-                    }
-                    
+                    // Cache put failed, but continue
                 }
     
                 return res;

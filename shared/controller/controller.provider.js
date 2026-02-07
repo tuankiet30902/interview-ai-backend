@@ -5,7 +5,6 @@ class ControllerProvider{
     constructor(){}
     reconstruct(func){
         let dfd  = q.defer();
-        // trycatch(function(){
             func().then(function(data){
                 dfd.resolve({data:AuthenticationProvider.encrypt_lv1(data)});
             },function(err){
@@ -14,9 +13,7 @@ class ControllerProvider{
                 }
                 dfd.reject(err);
             });
-        // },function(err){
-        //     dfd.reject({path :"ControllerProvider.reconstruct.trycatch", err : err.stack});
-        // });
+
         return dfd.promise;
     }
 }

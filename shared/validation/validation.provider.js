@@ -12,9 +12,7 @@ function overrideSchemaBody(schemaBody) {
     if (!schemaBody._service) {
         schemaBody._service = Joi.any();
     }
-    if (!schemaBody._performanceId) {
-        schemaBody._performanceId = Joi.any();
-    }
+    // Đã xóa _performanceId validation - không còn sử dụng performance tracking
     return Joi.object().keys(schemaBody).required();
 }
 

@@ -25,9 +25,7 @@ class MongoDBProvider {
         return MongoDBInterface.load_with_cache(dbname_prefix, settings.connectName.main, { collection, filter, top, offset, sort, keys, unlimited });
     }
 
-    loadMainWithTrack(dbname_prefix, _performanceId, collection, filter, top, offset, sort, keys, unlimited) {
-        return MongoDBInterface.load(dbname_prefix, settings.connectName.main, { _performanceId, collection, filter, top, offset, sort, keys, unlimited });
-    }
+    // Đã xóa loadMainWithTrack - không còn sử dụng performance tracking
 
     // ============ GET ONE METHODS ============
     getOne(dbname_prefix, dbname, collection, filter) {

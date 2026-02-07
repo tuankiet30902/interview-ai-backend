@@ -6,9 +6,7 @@ const morgan = require('morgan');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const http = require('http');
-const passport = require('passport');
-const session = require('express-session');
-const flash = require('connect-flash');
+// Đã xóa passport, session, flash - không còn sử dụng passport authentication
 
 require('module-alias/register');
 require('dotenv').config();
@@ -75,9 +73,7 @@ function setupMiddlewares(extraAllowedOrigins) {
         }
     }));
 
-    app.use(session({ secret: setting.secretSession, saveUninitialized: true, resave: true }));
-    app.use(passport.initialize());
-    app.use(flash());
+    // Đã xóa session, passport, flash - không còn sử dụng passport authentication
 }
 
 function setupRoutes() {
