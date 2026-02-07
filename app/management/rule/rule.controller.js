@@ -1,15 +1,15 @@
 
 const trycatch = require('trycatch');
 const q = require('q');
-const {ItemSetup} =require('../../../shared/setup/items.const');
+// Đã xóa ItemSetup - không còn sử dụng setup
 class RuleController {
     constructor() { }
     load() {
         let dfd = q.defer();
         trycatch(function () {
-            let Items = ItemSetup.getItems("management","rule");
-            dfd.resolve(Items);
-            Items = undefined;
+            // Đã xóa ItemSetup.getItems - không còn sử dụng setup
+            // Trả về mảng rỗng thay vì items từ setup
+            dfd.resolve([]);
         }, function (err) {
             dfd.reject({ path: "RuleController.load.trycatch", err: err.stack });
             err = undefined;

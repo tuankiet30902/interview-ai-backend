@@ -55,7 +55,7 @@ class MultiTenant {
             domain: { $eq: domain }
         };
 
-        MongoDBProvider.load(undefined, mongoDBSettings.connectName.host.business, "service", filter
+        MongoDBProvider.load(undefined, mongoDBSettings.connectName.main, "service", filter
         ).then(function (data) {
             const result = data[0] ? data : false;
             serviceCache[cacheKey] = {
@@ -92,7 +92,7 @@ class MultiTenant {
         let dfd = q.defer();
         let filter = {};
 
-        MongoDBProvider.load(undefined, mongoDBSettings.connectName.host.business, "service", filter)
+        MongoDBProvider.load(undefined, mongoDBSettings.connectName.main, "service", filter)
             .then(function (data) {
                 dfd.resolve(data);
             }, function (err) {

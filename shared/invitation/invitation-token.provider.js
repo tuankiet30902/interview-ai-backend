@@ -42,7 +42,7 @@ class InvitationTokenProvider {
         };
 
         // ✅ FIX: Save to database instead of memory
-        MongoDBProvider.insert_onManagement(
+        MongoDBProvider.insertMain(
             this.dbname_prefix,
             this.collection,
             'system',
@@ -75,7 +75,7 @@ class InvitationTokenProvider {
         }
 
         // ✅ FIX: Load from database instead of memory
-        MongoDBProvider.getOne_onManagement(
+        MongoDBProvider.getOneMain(
             this.dbname_prefix,
             this.collection,
             { token: { $eq: token } }
@@ -92,7 +92,7 @@ class InvitationTokenProvider {
             if (Date.now() > invitation.expiresAt) {
                 // Delete expired invitation (background task, don't wait)
                 const self = this;
-                MongoDBProvider.delete_onManagement(
+                MongoDBProvider.deleteMain(
                     self.dbname_prefix,
                     self.collection,
                     'system',
@@ -144,7 +144,7 @@ class InvitationTokenProvider {
         }
 
         // Load from database without checking status
-        MongoDBProvider.getOne_onManagement(
+        MongoDBProvider.getOneMain(
             this.dbname_prefix,
             this.collection,
             { token: { $eq: token } }
@@ -184,7 +184,7 @@ class InvitationTokenProvider {
             status: 'accepted',
             acceptedAt: Date.now()
         };
-        return MongoDBProvider.update_onManagement(
+        return MongoDBProvider.updateMain(
             this.dbname_prefix,
             this.collection,
             'system',
@@ -202,7 +202,7 @@ class InvitationTokenProvider {
             status: 'rejected',
             rejectedAt: Date.now()
         };
-        return MongoDBProvider.update_onManagement(
+        return MongoDBProvider.updateMain(
             this.dbname_prefix,
             this.collection,
             'system',
@@ -217,7 +217,7 @@ class InvitationTokenProvider {
     cleanupExpiredInvitations() {
         // ✅ FIX: Cleanup from database (background task, don't wait)
         const now = Date.now();
-        MongoDBProvider.delete_onManagement(
+        MongoDBProvider.deleteMain(
             this.dbname_prefix,
             this.collection,
             'system',
@@ -235,7 +235,7 @@ class InvitationTokenProvider {
         const now = Date.now();
 
         // ✅ FIX: Query from database instead of memory
-        MongoDBProvider.load_onManagement(
+        MongoDBProvider.loadMain(
             this.dbname_prefix,
             this.collection,
             {

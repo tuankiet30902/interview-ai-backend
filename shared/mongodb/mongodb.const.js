@@ -17,16 +17,7 @@ var obj = {
     schemaAuth: MONGODB_SCHEMA_AUTH,
     limitItem:5000,
     connectName:{
-        management:"",
-        office:"",
-        basic:"",
-        education:"",
-        utilities:"",
-        host: {
-            management: 'theera_management',
-            business: 'theera_business',
-        },
-        landing_page: "landing_page"
+        main: "",  // Database name duy nhất cho tất cả collections
     },
     prefixHost: 'theera',
     systemUsername: [

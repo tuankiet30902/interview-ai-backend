@@ -2,7 +2,7 @@ const q = require('q');
 const { MongoDBCore } = require('./mongodb.core');
 const MongoDBConst = require('./mongodb.const');
 const { CacheInterface } = require('../redis/cache.interface');
-const { DBConfig } = require('../setup/db.const');
+// Đã xóa DBConfig - không còn sử dụng setup
 var initResource = require('../init').init;
 const { algorithm } = require("../functions/functions");
 const _suffixesCount = "_count";
@@ -17,7 +17,7 @@ const generateDBname = function (dbname_prefix, dbname) {
 const cleanCachingSessionData = function (dbname_prefix, collection) {
     if (MongoDBConst.SessionCollections.includes(collection)) {
         return CacheInterface.del(
-            generateDBname(dbname_prefix, MongoDBConst.connectName.management),
+            generateDBname(dbname_prefix, MongoDBConst.connectName.main),
             MongoDBConst.nameCollection.user,
         );
     }
@@ -98,15 +98,15 @@ class MongoDBInterface {
                 idAr.push(new require('mongodb').ObjectID(data[i]._id));
                 dataAr.push(data[i].data);
             }
-            dfdAr.push(MongoDBCore.delete(initResource.connectMongoDB.db(generateDBname(dbname_prefix, MongoDBConst.connectName.management)), { username: param.username, collection: MongoDBConst.nameCollection.recyclebin }, { _id: { $in: idAr } }, options));
+            dfdAr.push(MongoDBCore.delete(initResource.connectMongoDB.db(generateDBname(dbname_prefix, MongoDBConst.connectName.main)), { username: param.username, collection: MongoDBConst.nameCollection.recyclebin }, { _id: { $in: idAr } }, options));
             dfdAr.push(MongoDBCore.insertMany(initResource.connectMongoDB.db(generateDBname(dbname_prefix, dbname)), param.collection, dataAr, options));
             
             dfdAr.push(cleanCachingSessionData(dbname_prefix ,param.collection));
             
             dfdAr.push(CacheInterface.del(generateDBname(dbname_prefix, dbname), param.collection));
             dfdAr.push(CacheInterface.del(generateDBname(dbname_prefix, dbname), param.collection + _suffixesCount));
-            dfdAr.push(CacheInterface.del(generateDBname(dbname_prefix, MongoDBConst.connectName.management), MongoDBConst.nameCollection.recyclebin));
-            dfdAr.push(CacheInterface.del(generateDBname(dbname_prefix, MongoDBConst.connectName.management), MongoDBConst.nameCollection.recyclebin + _suffixesCount));
+            dfdAr.push(CacheInterface.del(generateDBname(dbname_prefix, MongoDBConst.connectName.main), MongoDBConst.nameCollection.recyclebin));
+            dfdAr.push(CacheInterface.del(generateDBname(dbname_prefix, MongoDBConst.connectName.main), MongoDBConst.nameCollection.recyclebin + _suffixesCount));
             q.all(dataAr).then(function (res) {
                 dfd.resolve(res);
                 res = undefined;
@@ -144,12 +144,12 @@ class MongoDBInterface {
                 idAr.push(new require('mongodb').ObjectID(data[i]._id));
                 dataAr.push(data[i].data);
             }
-            dfdAr.push(MongoDBCore.delete(initResource.connectMongoDB.db(generateDBname(dbname_prefix, MongoDBConst.connectName.management)), { collection: MongoDBConst.nameCollection.recyclebin }, { _id: { $in: idAr } }, options));
+            dfdAr.push(MongoDBCore.delete(initResource.connectMongoDB.db(generateDBname(dbname_prefix, MongoDBConst.connectName.main)), { collection: MongoDBConst.nameCollection.recyclebin }, { _id: { $in: idAr } }, options));
             dfdAr.push(MongoDBCore.insertMany(initResource.connectMongoDB.db(generateDBname(dbname_prefix, dbname)), param.collection, dataAr, options));
             dfdAr.push(CacheInterface.del(generateDBname(dbname_prefix, dbname), param.collection));
             dfdAr.push(CacheInterface.del(generateDBname(dbname_prefix, dbname), param.collection + _suffixesCount));
-            dfdAr.push(CacheInterface.del(generateDBname(dbname_prefix, MongoDBConst.connectName.management), MongoDBConst.nameCollection.recyclebin));
-            dfdAr.push(CacheInterface.del(generateDBname(dbname_prefix, MongoDBConst.connectName.management), MongoDBConst.nameCollection.recyclebin + _suffixesCount));
+            dfdAr.push(CacheInterface.del(generateDBname(dbname_prefix, MongoDBConst.connectName.main), MongoDBConst.nameCollection.recyclebin));
+            dfdAr.push(CacheInterface.del(generateDBname(dbname_prefix, MongoDBConst.connectName.main), MongoDBConst.nameCollection.recyclebin + _suffixesCount));
             q.all(dataAr).then(async function (res) {
                 await Promise.all([options.session.commitTransaction()]);
                 options.session.endSession();
@@ -217,12 +217,7 @@ class MongoDBInterface {
 
     insertEntity(dbname_prefix, dbname, param, data, options) {
         let dfd = q.defer();
-        if (DBConfig.checkSubCache(dbname, param.collection)) {
-            if (!param.subCache) {
-                dfd.reject({ path: "MongoDBInterface.insertEntity.subCacheIsUndifined", err: "subCacheIsUndifined" });
-                return dfd.promise;
-            }
-        }
+        // Đã xóa DBConfig.checkSubCache - không còn sử dụng setup
 
         let subCache = "";
         param.subCache ? subCache = param.subCache : subCache = subCache;
@@ -280,63 +275,10 @@ class MongoDBInterface {
     }
 
     insert(dbname_prefix, dbname, param, data, options) {
-        if (DBConfig.checkSubCache(dbname, param.collection)) {
-            if (!param.subCache) {
-                let dfd = q.defer();
-                dfd.reject({ path: "MongoDBInterface.insert.subCacheIsUndifined", err: "subCacheIsUndifined" });
-                return dfd.promise;
-            }
-        }
-
-        if (DBConfig.checkNotEntity(dbname, param.collection)) {
-            let dfd = q.defer();
-
-            let subCache = "";
-            param.subCache ? subCache = param.subCache : subCache = subCache;
-
-            MongoDBCore.insert(initResource.connectMongoDB.db(generateDBname(dbname_prefix, dbname)), param.collection, data, options).then(function (res) {
-                let dfdAr = [];
-                dfdAr.push(CacheInterface.del(generateDBname(dbname_prefix, dbname), param.collection + subCache));
-                dfdAr.push(CacheInterface.del(generateDBname(dbname_prefix, dbname), param.collection + subCache + _suffixesCount));
-                
-                dfdAr.push(cleanCachingSessionData(dbname_prefix ,param.collection));
-                q.all(dfdAr).then(function () {
-                    dfd.resolve(res);
-                    res = undefined;
-                    dfdAr = undefined;
-                    dbname = undefined;
-                    param = undefined;
-                    data = undefined;
-                    options = undefined;
-                    dfd = undefined;
-                    subCache = undefined;
-                }, function (err) {
-                    dfd.reject({ path: "MongoDBInterface.insert.db", err });
-                    err = undefined;
-                    res = undefined;
-                    dfdAr = undefined;
-                    dbname = undefined;
-                    param = undefined;
-                    data = undefined;
-                    options = undefined;
-                    subCache = undefined;
-                });
-            }, function (err) {
-                dfd.reject(err);
-                err = undefined;
-                dbname = undefined;
-                param = undefined;
-                data = undefined;
-                options = undefined;
-                subCache = undefined;
-            });
-
-            return dfd.promise;
-        } else {
-            let obj = new MongoDBInterface();
-            return obj.insertEntity(dbname_prefix, dbname, param, data, options);
-        }
-
+        // Đã xóa DBConfig.checkSubCache và checkNotEntity - không còn sử dụng setup
+        // Luôn dùng insertEntity để có entity tracking
+        let obj = new MongoDBInterface();
+        return obj.insertEntity(dbname_prefix, dbname, param, data, options);
     }
 
     insertEntityWithSequenceNumber(dbname_prefix, dbname, param, data, options) {
@@ -390,48 +332,10 @@ class MongoDBInterface {
     }
 
     insertWithSequenceNumber(dbname_prefix, dbname, param, data, options) {
-        if (DBConfig.checkNotEntity(dbname, param.collection)) {
-            let dfd = q.defer();
-            let obj = new MongoDBInterface();
-            obj.autonumber(dbname_prefix, dbname, param.collection).then(function (sequenceId) {
-                data.id = sequenceId;
-                sequenceId = undefined;
-                obj.insert(dbname_prefix, dbname, param, data, options).then(function (res) {
-                    dfd.resolve(res);
-                    res = undefined;
-                    obj = undefined;
-                    dbname = undefined;
-                    param = undefined;
-                    data = undefined;
-                    options = undefined;
-                    dfd = undefined;
-                }, function (err) {
-                    dfd.reject(err);
-                    err = undefined;
-                    obj = undefined;
-                    dbname = undefined;
-                    param = undefined;
-                    data = undefined;
-                    options = undefined;
-
-                });
-            }, function (err) {
-                dfd.reject(err);
-                err = undefined;
-                obj = undefined;
-                dbname = undefined;
-                param = undefined;
-                data = undefined;
-                options = undefined;
-            });
-
-
-            return dfd.promise;
-        } else {
-            let obj = new MongoDBInterface();
-            return obj.insertEntityWithSequenceNumber(dbname_prefix, dbname, param, data, options);
-        }
-
+        // Đã xóa DBConfig.checkNotEntity - không còn sử dụng setup
+        // Luôn dùng insertEntityWithSequenceNumber để có entity tracking
+        let obj = new MongoDBInterface();
+        return obj.insertEntityWithSequenceNumber(dbname_prefix, dbname, param, data, options);
     }
 
     updateSafe(dbname_prefix, dbname, param, filter, data, options) {
@@ -479,8 +383,8 @@ class MongoDBInterface {
                     dfdAr.push(cleanCachingSessionData(dbname_prefix ,param.collection));
                     dfdAr2.push(CacheInterface.del(generateDBname(dbname_prefix, dbname), param.collection + subCache));
                     dfdAr2.push(CacheInterface.del(generateDBname(dbname_prefix, dbname), param.collection + subCache + _suffixesCount));
-                    dfdAr2.push(CacheInterface.del(generateDBname(dbname_prefix, MongoDBConst.connectName.management), MongoDBConst.nameCollection.backup + param.collection + subCache));
-                    dfdAr2.push(CacheInterface.del(generateDBname(dbname_prefix, MongoDBConst.connectName.management), MongoDBConst.nameCollection.backup + param.collection + subCache + _suffixesCount));
+                    dfdAr2.push(CacheInterface.del(generateDBname(dbname_prefix, MongoDBConst.connectName.main), MongoDBConst.nameCollection.backup + param.collection + subCache));
+                    dfdAr2.push(CacheInterface.del(generateDBname(dbname_prefix, MongoDBConst.connectName.main), MongoDBConst.nameCollection.backup + param.collection + subCache + _suffixesCount));
 
                     q.all(dfdAr2).then(async function () {
                         await Promise.all([options.session.commitTransaction()]);
@@ -553,7 +457,7 @@ class MongoDBInterface {
                         collection: param.collection,
                         data: dataBk[i]
                     };
-                    dfdAr.push(MongoDBCore.insert(initResource.connectMongoDB.db(generateDBname(dbname_prefix, MongoDBConst.connectName.management)), MongoDBConst.nameCollection.backup, itemBk, { session: options.session }));
+                    dfdAr.push(MongoDBCore.insert(initResource.connectMongoDB.db(generateDBname(dbname_prefix, MongoDBConst.connectName.main)), MongoDBConst.nameCollection.backup, itemBk, { session: options.session }));
                     itemBk = undefined;
                 }
                 dfdAr.push(MongoDBCore.update(initResource.connectMongoDB.db(generateDBname(dbname_prefix, dbname)), param, filter, data, options));
@@ -567,13 +471,13 @@ class MongoDBInterface {
                 q.all(dfdAr).then(function (res) {
                     dfdAr = undefined;
                     let dfdAr2 = [];
-                    if (MongoDBConst.SessionCollections.includes(param.collection) && dbname === MongoDBConst.connectName.management) {
-                        dfdAr.push(CacheInterface.del(generateDBname(dbname_prefix, MongoDBConst.connectName.management), MongoDBConst.nameCollection.user));
+                    if (MongoDBConst.SessionCollections.includes(param.collection) && dbname === MongoDBConst.connectName.main) {
+                        dfdAr.push(CacheInterface.del(generateDBname(dbname_prefix, MongoDBConst.connectName.main), MongoDBConst.nameCollection.user));
                     }
                     dfdAr2.push(CacheInterface.del(generateDBname(dbname_prefix, dbname), param.collection + subCache));
                     dfdAr2.push(CacheInterface.del(generateDBname(dbname_prefix, dbname), param.collection + subCache + _suffixesCount));
-                    dfdAr2.push(CacheInterface.del(generateDBname(dbname_prefix, MongoDBConst.connectName.management), MongoDBConst.nameCollection.backup + param.collection + subCache));
-                    dfdAr2.push(CacheInterface.del(generateDBname(dbname_prefix, MongoDBConst.connectName.management), MongoDBConst.nameCollection.backup + param.collection + subCache + _suffixesCount));
+                    dfdAr2.push(CacheInterface.del(generateDBname(dbname_prefix, MongoDBConst.connectName.main), MongoDBConst.nameCollection.backup + param.collection + subCache));
+                    dfdAr2.push(CacheInterface.del(generateDBname(dbname_prefix, MongoDBConst.connectName.main), MongoDBConst.nameCollection.backup + param.collection + subCache + _suffixesCount));
                     q.all(dfdAr2).then(function () {
 
                         dfd.resolve(res);
@@ -625,48 +529,33 @@ class MongoDBInterface {
     }
 
     update(dbname_prefix, dbname, param, filter, data, options) {
- 
-        if (DBConfig.checkSafe(dbname, param.collection)) {
-            let obj = new MongoDBInterface();
-            return obj.updateSafe(dbname_prefix, dbname, param, filter, data, options);
-        } else {
-            let dfd = q.defer();
-            options = options || {};
-            options.multi = true;
-            MongoDBCore.update(initResource.connectMongoDB.db(generateDBname(dbname_prefix, dbname)), param, filter, data, options).then(function (res) {
-                let dfdAr = [];
-                dfdAr.push(cleanCachingSessionData(dbname_prefix ,param.collection));
-                dfd.resolve(res);
-               
-            }, function (err) {
-                dfd.reject(err);
-                err = undefined;
-                dfdAr = undefined;
-                dbname = undefined;
-                param = undefined;
-                filter = undefined;
-                data = undefined;
-                options = undefined;
-            });
-            return dfd.promise;
-        }
+        // Đã xóa DBConfig.checkSafe - không còn sử dụng setup, luôn dùng update thông thường
+        let dfd = q.defer();
+        options = options || {};
+        options.multi = true;
+        MongoDBCore.update(initResource.connectMongoDB.db(generateDBname(dbname_prefix, dbname)), param, filter, data, options).then(function (res) {
+            let dfdAr = [];
+            dfdAr.push(cleanCachingSessionData(dbname_prefix ,param.collection));
+            dfd.resolve(res);
+           
+        }, function (err) {
+            dfd.reject(err);
+            err = undefined;
+            dfdAr = undefined;
+            dbname = undefined;
+            param = undefined;
+            filter = undefined;
+            data = undefined;
+            options = undefined;
+        });
+        return dfd.promise;
     }
 
     update_with_cache(dbname_prefix, dbname, param, filter, data, options) {
-        if (DBConfig.checkSubCache(dbname, param.collection)) {
-            if (!param.subCache) {
-                let dfd = q.defer();
-                dfd.reject({ path: "MongoDBInterface.update.subCacheIsUndifined", err: "subCacheIsUndifined" });
-                return dfd.promise;
-            }
-        }
-        if (DBConfig.checkSafe(dbname, param.collection)) {
-            let obj = new MongoDBInterface();
-            return obj.updateSafe(dbname_prefix, dbname, param, filter, data, options);
-        } else {
-            let dfd = q.defer();
-            let subCache = "";
-            param.subCache ? subCache = param.subCache : subCache = subCache;
+        // Đã xóa DBConfig.checkSubCache và checkSafe - không còn sử dụng setup
+        let dfd = q.defer();
+        let subCache = "";
+        param.subCache ? subCache = param.subCache : subCache = subCache;
 
             options = options || {};
             options.multi = true;
@@ -675,8 +564,8 @@ class MongoDBInterface {
                 dfdAr.push(cleanCachingSessionData(dbname_prefix ,param.collection));
                 dfdAr.push(CacheInterface.del(generateDBname(dbname_prefix, dbname), param.collection + subCache));
                 dfdAr.push(CacheInterface.del(generateDBname(dbname_prefix, dbname), param.collection + subCache + _suffixesCount));
-                dfdAr.push(CacheInterface.del(generateDBname(dbname_prefix, MongoDBConst.connectName.management), MongoDBConst.nameCollection.backup + param.collection + subCache));
-                dfdAr.push(CacheInterface.del(generateDBname(dbname_prefix, MongoDBConst.connectName.management), MongoDBConst.nameCollection.backup + param.collection + subCache + _suffixesCount));
+                dfdAr.push(CacheInterface.del(generateDBname(dbname_prefix, MongoDBConst.connectName.main), MongoDBConst.nameCollection.backup + param.collection + subCache));
+                dfdAr.push(CacheInterface.del(generateDBname(dbname_prefix, MongoDBConst.connectName.main), MongoDBConst.nameCollection.backup + param.collection + subCache + _suffixesCount));
                 q.all(dfdAr).then(function () {
                     dfd.resolve(res);
                     res = undefined;
@@ -710,7 +599,6 @@ class MongoDBInterface {
                 options = undefined;
             });
             return dfd.promise;
-        }
     }
 
     deleteSoft(dbname_prefix, dbname, param, filter, options) {
@@ -760,11 +648,11 @@ class MongoDBInterface {
                 };
                 
                 dfdAr.push(cleanCachingSessionData(dbname_prefix ,param.collection));
-                dfdAr1.push(MongoDBCore.insert(initResource.connectMongoDB.db(generateDBname(dbname_prefix, MongoDBConst.connectName.management)), MongoDBConst.nameCollection.recyclebin, recyclebinItem, { session: options.session }));
+                dfdAr1.push(MongoDBCore.insert(initResource.connectMongoDB.db(generateDBname(dbname_prefix, MongoDBConst.connectName.main)), MongoDBConst.nameCollection.recyclebin, recyclebinItem, { session: options.session }));
                 dfdAr1.push(CacheInterface.del(generateDBname(dbname_prefix, dbname), param.collection + subCache));
                 dfdAr1.push(CacheInterface.del(generateDBname(dbname_prefix, dbname), param.collection + subCache + _suffixesCount));
-                dfdAr1.push(CacheInterface.del(generateDBname(dbname_prefix, MongoDBConst.connectName.management), MongoDBConst.nameCollection.recyclebin + param.collection + subCache));
-                dfdAr1.push(CacheInterface.del(generateDBname(dbname_prefix, MongoDBConst.connectName.management), MongoDBConst.nameCollection.recyclebin + param.collection + subCache + _suffixesCount));
+                dfdAr1.push(CacheInterface.del(generateDBname(dbname_prefix, MongoDBConst.connectName.main), MongoDBConst.nameCollection.recyclebin + param.collection + subCache));
+                dfdAr1.push(CacheInterface.del(generateDBname(dbname_prefix, MongoDBConst.connectName.main), MongoDBConst.nameCollection.recyclebin + param.collection + subCache + _suffixesCount));
                 d = undefined;
                 recyclebinItem = undefined;
             }
@@ -811,7 +699,7 @@ class MongoDBInterface {
                         collection: param.collection
                     };
 
-                    dfdAr1.push(MongoDBCore.insert(initResource.connectMongoDB.db(generateDBname(dbname_prefix, MongoDBConst.connectName.management)), MongoDBConst.nameCollection.recyclebin, recyclebinItem, { session }));
+                    dfdAr1.push(MongoDBCore.insert(initResource.connectMongoDB.db(generateDBname(dbname_prefix, MongoDBConst.connectName.main)), MongoDBConst.nameCollection.recyclebin, recyclebinItem, { session }));
                     recyclebinItem = undefined;
                 }
 
@@ -821,8 +709,8 @@ class MongoDBInterface {
                     dfdAr.push(cleanCachingSessionData(dbname_prefix ,param.collection));
                     dfdAr2.push(CacheInterface.del(generateDBname(dbname_prefix, dbname), param.collection + subCache));
                     dfdAr2.push(CacheInterface.del(generateDBname(dbname_prefix, dbname), param.collection + subCache + _suffixesCount));
-                    dfdAr2.push(CacheInterface.del(generateDBname(dbname_prefix, MongoDBConst.connectName.management), MongoDBConst.nameCollection.recyclebin));
-                    dfdAr2.push(CacheInterface.del(generateDBname(dbname_prefix, MongoDBConst.connectName.management), MongoDBConst.nameCollection.recyclebin + _suffixesCount));
+                    dfdAr2.push(CacheInterface.del(generateDBname(dbname_prefix, MongoDBConst.connectName.main), MongoDBConst.nameCollection.recyclebin));
+                    dfdAr2.push(CacheInterface.del(generateDBname(dbname_prefix, MongoDBConst.connectName.main), MongoDBConst.nameCollection.recyclebin + _suffixesCount));
                     q.all(dfdAr2).then(async function () {
 
                         await Promise.all([session.commitTransaction()]);
@@ -877,95 +765,64 @@ class MongoDBInterface {
     }
 
     delete(dbname_prefix, dbname, param, filter, options) {
-
-        if (DBConfig.checkSoftDelete(dbname, param.collection)) {
-            let obj = new MongoDBInterface();
-            return obj.deleteSoft(dbname_prefix, dbname, param, filter, options);
-        }
-        else {
-
-            if (DBConfig.checkSafe(dbname, param.collection)) {
-                let obj = new MongoDBInterface();
-                return obj.deleteSafe(dbname_prefix, dbname, param, filter, options);
-            } else {
-                let dfd = q.defer();
-                MongoDBCore.delete(initResource.connectMongoDB.db(generateDBname(dbname_prefix, dbname)), param, filter, options).then(function (res) {
-                    cleanCachingSessionData(dbname_prefix ,param.collection);
-                    dfd.resolve(res);
-                }, function (err) {
-                    dfd.reject(err);
-                    err = undefined;
-                    dbname = undefined;
-                    param = undefined;
-                    filter = undefined;
-                    options = undefined;
-                    subCache = undefined;
-                });
-                return dfd.promise;
-            }
-        }
+        // Đã xóa DBConfig.checkSoftDelete và checkSafe - không còn sử dụng setup, luôn dùng delete thông thường
+        let dfd = q.defer();
+        MongoDBCore.delete(initResource.connectMongoDB.db(generateDBname(dbname_prefix, dbname)), param, filter, options).then(function (res) {
+            cleanCachingSessionData(dbname_prefix ,param.collection);
+            dfd.resolve(res);
+        }, function (err) {
+            dfd.reject(err);
+            err = undefined;
+            dbname = undefined;
+            param = undefined;
+            filter = undefined;
+            options = undefined;
+        });
+        return dfd.promise;
     }
 
     delete_with_cache(dbname_prefix, dbname, param, filter, options) {
-        if (DBConfig.checkSubCache(dbname, param.collection)) {
-            if (!param.subCache) {
-                let dfd = q.defer();
-                dfd.reject({ path: "MongoDBInterface.delete.subCacheIsUndifined", err: "subCacheIsUndifined" });
-                return dfd.promise;
-            }
-        }
-        if (DBConfig.checkSoftDelete(dbname, param.collection)) {
-            let obj = new MongoDBInterface();
-            return obj.deleteSoft(dbname_prefix, dbname, param, filter, options);
-        }
-        else {
-
-            if (DBConfig.checkSafe(dbname, param.collection)) {
-                let obj = new MongoDBInterface();
-                return obj.deleteSafe(dbname_prefix, dbname, param, filter, options);
-            } else {
-                let dfd = q.defer();
-                let subCache = "";
-                param.subCache ? subCache = param.subCache : subCache = subCache;
-                MongoDBCore.delete(initResource.connectMongoDB.db(generateDBname(dbname_prefix, dbname)), param, filter, options).then(function (res) {
-                    let dfdAr = [];
-                    dfdAr.push(CacheInterface.del(generateDBname(dbname_prefix, dbname), param.collection + subCache));
-                    dfdAr.push(CacheInterface.del(generateDBname(dbname_prefix, dbname), param.collection + subCache + _suffixesCount));
-                    
-                    dfdAr.push(cleanCachingSessionData(dbname_prefix ,param.collection));
-                    q.all(dfdAr).then(function () {
-                        dfd.resolve(res);
-                        res = undefined;
-                        dfdAr = undefined;
-                        dbname = undefined;
-                        param = undefined;
-                        filter = undefined;
-                        options = undefined;
-                        dfd = undefined;
-                        subCache = undefined;
-                    }, function (err) {
-                        dfd.reject({ path: "MongoDBInterface.delete.db", err });
-                        err = undefined;
-                        res = undefined;
-                        dfdAr = undefined;
-                        dbname = undefined;
-                        param = undefined;
-                        filter = undefined;
-                        options = undefined;
-                        subCache = undefined;
-                    });
-                }, function (err) {
-                    dfd.reject(err);
-                    err = undefined;
-                    dbname = undefined;
-                    param = undefined;
-                    filter = undefined;
-                    options = undefined;
-                    subCache = undefined;
-                });
-                return dfd.promise;
-            }
-        }
+        // Đã xóa DBConfig.checkSubCache, checkSoftDelete và checkSafe - không còn sử dụng setup
+        let dfd = q.defer();
+        let subCache = "";
+        param.subCache ? subCache = param.subCache : subCache = subCache;
+        MongoDBCore.delete(initResource.connectMongoDB.db(generateDBname(dbname_prefix, dbname)), param, filter, options).then(function (res) {
+            let dfdAr = [];
+            dfdAr.push(CacheInterface.del(generateDBname(dbname_prefix, dbname), param.collection + subCache));
+            dfdAr.push(CacheInterface.del(generateDBname(dbname_prefix, dbname), param.collection + subCache + _suffixesCount));
+            
+            dfdAr.push(cleanCachingSessionData(dbname_prefix ,param.collection));
+            q.all(dfdAr).then(function () {
+                dfd.resolve(res);
+                res = undefined;
+                dfdAr = undefined;
+                dbname = undefined;
+                param = undefined;
+                filter = undefined;
+                options = undefined;
+                dfd = undefined;
+                subCache = undefined;
+            }, function (err) {
+                dfd.reject({ path: "MongoDBInterface.delete.db", err });
+                err = undefined;
+                res = undefined;
+                dfdAr = undefined;
+                dbname = undefined;
+                param = undefined;
+                filter = undefined;
+                options = undefined;
+                subCache = undefined;
+            });
+        }, function (err) {
+            dfd.reject(err);
+            err = undefined;
+            dbname = undefined;
+            param = undefined;
+            filter = undefined;
+            options = undefined;
+            subCache = undefined;
+        });
+        return dfd.promise;
     }
 
     async load(dbname_prefix, dbname, query) {
@@ -977,16 +834,7 @@ class MongoDBInterface {
             query.top = 0;
         }
     
-        // ========= STEP 1: Soft delete filter =========
-        if (DBConfig.checkSoftDelete(dbname, query.collection)) {
-            const tempFilter = {
-                $and: [
-                    { [MongoDBConst.nameField.SoftDelete]: { $ne: true } },
-                    query.filter
-                ]
-            };
-            query.filter = tempFilter;
-        }
+        // Đã xóa DBConfig.checkSoftDelete - không còn sử dụng setup, không filter soft delete
 
         try{
             const res = await MongoDBCore.load(
@@ -1013,30 +861,10 @@ class MongoDBInterface {
             query.top = 0;
         }
     
-        // ========= STEP 0: Validate subCache =========
-        if (DBConfig.checkSubCache(dbname, query.collection)) {
-            if (!query.subCache) {
-                throw {
-                    path: "MongoDBInterface.load.subCacheIsUndifined",
-                    err: "subCacheIsUndifined"
-                };
-            }
-        }
-    
+        // Đã xóa DBConfig.checkSubCache và checkSoftDelete - không còn sử dụng setup
         let subCache = query.subCache || "";
     
-        // ========= STEP 1: Soft delete filter =========
-        if (DBConfig.checkSoftDelete(dbname, query.collection)) {
-            const tempFilter = {
-                $and: [
-                    { [MongoDBConst.nameField.SoftDelete]: { $ne: true } },
-                    query.filter
-                ]
-            };
-            query.filter = tempFilter;
-        }
-    
-        // ========= STEP 2: Try cache =========
+        // ========= Try cache =========
         if (_performanceId) {
             await track(
                 { _performanceId },
@@ -1138,26 +966,9 @@ class MongoDBInterface {
 
     count_with_cache(dbname_prefix, dbname, query) {
         let dfd = q.defer();
-        if (DBConfig.checkSubCache(dbname, query.collection)) {
-            if (!query.subCache) {
-                dfd.reject({ path: "MongoDBInterface.count.subCacheIsUndifined", err: "subCacheIsUndifined" });
-                return dfd.promise;
-            }
-        }
-
+        // Đã xóa DBConfig.checkSubCache và checkSoftDelete - không còn sử dụng setup
         let subCache = "";
         query.subCache ? subCache = query.subCache : subCache = subCache;
-        if (DBConfig.checkSoftDelete(dbname, query.collection)) {
-            let tempfilter = {
-                $and: [
-                    {}
-                ]
-            };
-            tempfilter.$and[0][MongoDBConst.nameField.SoftDelete] = { $ne: true };
-            tempfilter.$and.push(query.filter);
-            query.filter = tempfilter;
-            tempfilter = undefined;
-        }
 
         CacheInterface.get(
             generateDBname(dbname_prefix, dbname),

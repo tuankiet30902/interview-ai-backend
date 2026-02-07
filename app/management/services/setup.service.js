@@ -52,7 +52,7 @@ class SetupService {
 
     load_setting(dbname_prefix) {
         let dfd = q.defer();
-        MongoDBProvider.load_onManagement(dbname_prefix, "setting", {}).then(function (data) {
+        MongoDBProvider.loadMain(dbname_prefix, "setting", {}).then(function (data) {
             let dfdArray = [];
             for (var i in data) {
                 dfdArray.push(generateConfigFileSetting(dbname_prefix, data[i]));

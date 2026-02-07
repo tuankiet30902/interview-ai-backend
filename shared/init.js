@@ -13,7 +13,7 @@ const { socketHost } = require('../utils/setting');
 const crypto = require('crypto-js');
 const jwt = require('jsonwebtoken');
 const { JWTOptions, secretkey } = require('../shared/authentication/authentication.const');
-const { ConfigSetup } = require('../shared/setup/config.const');
+// Đã xóa ConfigSetup - không còn sử dụng setup
 const { MinioConfig } = require('./store/minio/config');
 
 var init = {};
@@ -127,12 +127,8 @@ init.initSocket = function() {
         trycatch(function() {
             count++;
             let cycleLife = JWTOptions.longExpiresIn;
-            let secret;
-            if (ConfigSetup.system.separateTenantFrontend) {
-                secret = JWTOptions.jwtSecret_onHost;
-            } else {
-                secret = JWTOptions.jwtSecret;
-            }
+            // Đã xóa ConfigSetup.system.separateTenantFrontend - luôn dùng jwtSecret
+            let secret = JWTOptions.jwtSecret;
             let dataen = crypto.AES.encrypt(JSON.stringify({ username: secret }), secretkey).toString();
             let payload = { "data": dataen };
 

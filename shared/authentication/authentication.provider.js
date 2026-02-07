@@ -5,7 +5,7 @@ const crypto = require('crypto-js');
 const q = require('q');
 const { messageHTTP, statusHTTP } = require('../../utils/setting');
 const { secretkey, JWTOptions } = require('./authentication.const');
-const { ConfigSetup } = require('../setup/config.const');
+// Đã xóa ConfigSetup - không còn sử dụng setup
 
 class AuthenticationProvider {
     constructor() { }

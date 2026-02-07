@@ -5,7 +5,7 @@ const q = require('q');
 const jwt = require('jsonwebtoken');
 const { JWTOptions } = require('../../../shared/authentication/authentication.const');
 const { UserService } = require('./user.service');
-const { ConfigSetup } = require('../../../shared/setup/config.const');
+// Đã xóa ConfigSetup - không còn sử dụng setup
 const { FileProvider } = require('../../../shared/file/file.provider');
 const { optimizeImageIfPossible } = require('../../../shared/file/image-optimizer');
 const trycatch = require('trycatch');
@@ -16,14 +16,9 @@ const settings = require('../../../utils/setting');
 const { TYPE_SERVICE } = require('./const');
 const { GoogleAuthProvider } = require('../../../shared/google-auth/google-auth.provider');
 const { MongoDBProvider } = require('../../../shared/mongodb/db.provider');
-const adminSocket = require('../admin/socket');
 
 const parentFolder = '/management';
 
-// Helper function removed - realtime updates no longer needed
-// const emitAdminDataChanged = (dbname_prefix, type) => {
-//     adminSocket.emitAdminDataChanged(dbname_prefix, type);
-// };
 const MAX_AVATAR_FILE_SIZE = 5 * 1024 * 1024; // 5MB hard limit for avatar images
 const countFilterCondition = function (body) {
     let count = 0;
@@ -105,12 +100,12 @@ const generateUserInfo = function (body) {
             obj.language = body.language;
         } else {
             // If it's an object but missing current field, use default
-            obj.language = ConfigSetup.user.new.language;
+            obj.language = { current: "vi-VN" }; // Giá trị mặc định
         }
     } else {
-        obj.language = ConfigSetup.user.new.language; // Already in correct format: { current: "vi-VN" }
+        obj.language = { current: "vi-VN" }; // Giá trị mặc định
     }
-    obj.isactive = body.isactive !== undefined ? body.isactive : ConfigSetup.user.new.isactive;
+    obj.isactive = body.isactive !== undefined ? body.isactive : true; // Giá trị mặc định
     return obj;
 }
 
@@ -242,12 +237,8 @@ class UserController {
                     UserService.mark_mfa(body._service[0].dbname_prefix, body.data.username).then(function () {
                         let dataen = AuthenticationProvider.encrypt_lv1({ username: body.data.username });
                         let payload = { "data": dataen };
-                        let secret;
-                        if (ConfigSetup.system.separateTenantFrontend) {
-                            secret = JWTOptions.jwtSecret_onHost;
-                        } else {
-                            secret = JWTOptions.jwtSecret;
-                        }
+                        // Đã xóa ConfigSetup.system.separateTenantFrontend - luôn dùng jwtSecret
+                        let secret = JWTOptions.jwtSecret;
 
                         let accessToken = jwt.sign(payload, secret, { expiresIn: JWTOptions.expiresIn });
                         let refreshToken = jwt.sign(payload, secret, { expiresIn: JWTOptions.longExpiresIn });
@@ -287,7 +278,8 @@ class UserController {
 
             let dataen = AuthenticationProvider.encrypt_lv1({ username });
             let payload = { "data": dataen };
-            let secret = ConfigSetup.system.separateTenantFrontend ? JWTOptions.jwtSecret_onHost : JWTOptions.jwtSecret;
+            // Đã xóa ConfigSetup.system.separateTenantFrontend - luôn dùng jwtSecret
+            let secret = JWTOptions.jwtSecret;
             let newAccessToken = jwt.sign(payload, secret, { expiresIn: JWTOptions.expiresIn });
 
             UserService.loadDetails(body._service[0].dbname_prefix, username).then(function (data) {
@@ -599,9 +591,7 @@ class UserController {
         return dfd.promise;
     }
 
-    /**
-     * Login or register with Google
-     */
+
     loginWithGoogle(body) {
         let dfd = q.defer();
         const dbname_prefix = body._service && body._service[0] ? body._service[0].dbname_prefix : "";
@@ -610,14 +600,12 @@ class UserController {
         UserService.loginWithGoogle(dbname_prefix, code).then(function (result) {
             const user = result.user;
 
-            // Ensure avatar structure exists for frontend consistency
             if (!user.avatar && user.avatar_url) {
                 user.avatar = { url: user.avatar_url };
             }
 
             const tokenInfo = getToken(body, user);
 
-            // Normalize tenant fields (do not auto-create anything)
             const tenantIds = (user.tenant_ids || []).map(id => id && id.toString ? id.toString() : String(id));
             const primaryTenantId = user.primary_tenant_id
                 ? (user.primary_tenant_id.toString ? user.primary_tenant_id.toString() : String(user.primary_tenant_id))

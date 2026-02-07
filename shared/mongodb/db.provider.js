@@ -1,103 +1,60 @@
 const { MongoDBInterface } = require('./db.interface');
 const settings = require('./mongodb.const');
+
 class MongoDBProvider {
     constructor() { }
+
+    // ============ LOAD METHODS ============
     loadAggregate(dbname_prefix, dbname, collection, filter) {
         return MongoDBInterface.load_aggregate(dbname_prefix, dbname, { collection, filter });
     }
 
-    loadAggregate_onManagement(dbname_prefix, collection, filter) {
-        return MongoDBInterface.load_aggregate(dbname_prefix, settings.connectName.management, { collection, filter });
+    loadAggregateMain(dbname_prefix, collection, filter) {
+        return MongoDBInterface.load_aggregate(dbname_prefix, settings.connectName.main, { collection, filter });
     }
 
-    loadAggregate_onOffice(dbname_prefix, collection, filter) {
-        return MongoDBInterface.load_aggregate(dbname_prefix, settings.connectName.office, { collection, filter });
+    load(dbname_prefix, dbname, collection, filter, top, offset, sort, keys, unlimited) {
+        return MongoDBInterface.load(dbname_prefix, dbname, { collection, filter, top, offset, sort, keys, unlimited });
     }
 
-    loadAggregate_onBasic(dbname_prefix, collection, filter) {
-        return MongoDBInterface.load_aggregate(dbname_prefix, settings.connectName.basic, { collection, filter });
+    loadMain(dbname_prefix, collection, filter, top, offset, sort, keys, unlimited) {
+        return MongoDBInterface.load(dbname_prefix, settings.connectName.main, { collection, filter, top, offset, sort, keys, unlimited });
     }
 
-    load(dbname_prefix, dbname, collection, filter, top, offset, sort, keys,unlimited) {
-        return MongoDBInterface.load(dbname_prefix, dbname, { collection, filter, top, offset, sort, keys,unlimited });
+    loadMainWithCache(dbname_prefix, collection, filter, top, offset, sort, keys, unlimited) {
+        return MongoDBInterface.load_with_cache(dbname_prefix, settings.connectName.main, { collection, filter, top, offset, sort, keys, unlimited });
     }
 
-    load_onManagement(dbname_prefix, collection, filter, top, offset, sort, keys,unlimited) {
-        return MongoDBInterface.load(dbname_prefix, settings.connectName.management, { collection, filter, top, offset, sort, keys,unlimited });
+    loadMainWithTrack(dbname_prefix, _performanceId, collection, filter, top, offset, sort, keys, unlimited) {
+        return MongoDBInterface.load(dbname_prefix, settings.connectName.main, { _performanceId, collection, filter, top, offset, sort, keys, unlimited });
     }
 
-    load_onManagement_with_cache(dbname_prefix, collection, filter, top, offset, sort, keys,unlimited) {
-        return MongoDBInterface.load_with_cache(dbname_prefix, settings.connectName.management, { collection, filter, top, offset, sort, keys,unlimited });
-    }
-
-    load_onOffice(dbname_prefix, collection, filter, top, offset, sort, keys,unlimited) {
-        return MongoDBInterface.load(dbname_prefix, settings.connectName.office, { collection, filter, top, offset, sort, keys,unlimited });
-    }
-
-    load_onOffice_with_cache(dbname_prefix, collection, filter, top, offset, sort, keys,unlimited) {
-        return MongoDBInterface.load_with_cache(dbname_prefix, settings.connectName.office, { collection, filter, top, offset, sort, keys,unlimited });
-    }
-
-    load_onOffice_withTrack(dbname_prefix,_performanceId, collection, filter, top, offset, sort, keys,unlimited) {
-        return MongoDBInterface.load(dbname_prefix, settings.connectName.office, {_performanceId, collection, filter, top, offset, sort, keys,unlimited });
-    }
-
-    load_onBasic(dbname_prefix, collection, filter, top, offset, sort, keys,unlimited) {
-        return MongoDBInterface.load(dbname_prefix, settings.connectName.basic, { collection, filter, top, offset, sort, keys,unlimited });
-    }
-
-    load_onBasic_with_cache(dbname_prefix, collection, filter, top, offset, sort, keys,unlimited) {
-        return MongoDBInterface.load_with_cache(dbname_prefix, settings.connectName.basic, { collection, filter, top, offset, sort, keys,unlimited });
-    }
-
+    // ============ GET ONE METHODS ============
     getOne(dbname_prefix, dbname, collection, filter) {
         return MongoDBInterface.getOne(dbname_prefix, dbname, collection, filter);
     }
 
-    getOne_onManagement(dbname_prefix, collection, filter) {
-        return MongoDBInterface.getOne(dbname_prefix, settings.connectName.management, collection, filter);
+    getOneMain(dbname_prefix, collection, filter) {
+        return MongoDBInterface.getOne(dbname_prefix, settings.connectName.main, collection, filter);
     }
 
-    getOne_onBasic(dbname_prefix, collection, filter) {
-        return MongoDBInterface.getOne(dbname_prefix, settings.connectName.basic, collection, filter);
-    }
-
-    getOne_onOffice(dbname_prefix, collection, filter) {
-        return MongoDBInterface.getOne(dbname_prefix, settings.connectName.office, collection, filter);
-    }
-
-    getOne_onEducation(dbname_prefix, collection, filter) {
-        return MongoDBInterface.getOne(dbname_prefix, settings.connectName.education, collection, filter);
-    }
-
+    // ============ COUNT METHODS ============
     count(dbname_prefix, dbname, collection, filter) {
         return MongoDBInterface.count(dbname_prefix, dbname, { collection, filter });
     }
 
-    count_onManagement(dbname_prefix, collection, filter) {
-        return MongoDBInterface.count(dbname_prefix, settings.connectName.management, { collection, filter });
+    countMain(dbname_prefix, collection, filter) {
+        return MongoDBInterface.count(dbname_prefix, settings.connectName.main, { collection, filter });
     }
 
-    count_onOffice(dbname_prefix, collection, filter) {
-        return MongoDBInterface.count(dbname_prefix, settings.connectName.office, { collection, filter });
-    }
-
-    count_onBasic(dbname_prefix, collection, filter) {
-        return MongoDBInterface.count(dbname_prefix, settings.connectName.basic, { collection, filter });
-    }
-
-    count_onEducation(dbname_prefix, collection, filter) {
-        return MongoDBInterface.count(dbname_prefix, settings.connectName.education, { collection, filter });
-    }
-
-    restore(dbname_prefix, dbname, collection,username, data, options) {
-        return MongoDBInterface.restore(dbname_prefix, dbname, {collection,username}, data, options);
-    }
-
+    // ============ INSERT METHODS ============
     insert(dbname_prefix, dbname, collection, username, data, options) {
         return MongoDBInterface.insert(dbname_prefix, dbname, { collection, username }, data, options);
     }
-    
+
+    insertMain(dbname_prefix, collection, username, data, options) {
+        return MongoDBInterface.insert(dbname_prefix, settings.connectName.main, { collection, username }, data, options);
+    }
 
     insertMany(dbname_prefix, dbname, collection, username, data, options) {
         return MongoDBInterface.insertMany(
@@ -107,53 +64,15 @@ class MongoDBProvider {
             options);
     }
 
-    insertMany_onManagement(dbname_prefix, collection,username, data, options) {
+    insertManyMain(dbname_prefix, collection, username, data, options) {
         return MongoDBInterface.insertMany(
-            dbname_prefix, settings.connectName.management,
-            {collection,username},
+            dbname_prefix, settings.connectName.main,
+            { collection, username },
             data,
             options);
     }
 
-    insertMany_onBasic(dbname_prefix, collection,username, data, options) {
-        return MongoDBInterface.insertMany(
-            dbname_prefix, settings.connectName.basic,
-            {collection,username},
-            data,
-            options);
-    }
-
-    insertMany_onOffice(dbname_prefix, collection,username, data, options) {
-        return MongoDBInterface.insertMany(
-            dbname_prefix, settings.connectName.office,
-            {collection,username},
-            data,
-            options);
-    }
-
-    insertMany_onEducation(dbname_prefix, collection,username, data, options) {
-        return MongoDBInterface.insertMany(
-            dbname_prefix, settings.connectName.education,
-            {collection,username},
-            data,
-            options);
-    }
-
-
-
-    insert_onManagement(dbname_prefix, collection, username, data, options) {
-        return MongoDBInterface.insert(dbname_prefix, settings.connectName.management, { collection, username }, data, options);
-    }
-
-    insert_onBasic(dbname_prefix, collection, username, data, options) {
-        return MongoDBInterface.insert(dbname_prefix, settings.connectName.basic, { collection, username }, data, options);
-    }
-
-    insert_onOffice(dbname_prefix, collection, username, data, options) {
-        return MongoDBInterface.insert(dbname_prefix, settings.connectName.office, { collection, username }, data, options);
-    }
-
-    insertWithSequenceNumber(dbname_prefix, dbname, collection,username, data, options) {
+    insertWithSequenceNumber(dbname_prefix, dbname, collection, username, data, options) {
         return MongoDBInterface.insertWithSequenceNumber(
             dbname_prefix,
             dbname,
@@ -163,130 +82,102 @@ class MongoDBProvider {
         );
     }
 
-    insertWithSequenceNumber_onManagement(dbname_prefix, collection,username, data, options) {
-        return MongoDBInterface.insertWithSequenceNumber(dbname_prefix,
-            settings.connectName.management,
-            {collection,username},
+    insertWithSequenceNumberMain(dbname_prefix, collection, username, data, options) {
+        return MongoDBInterface.insertWithSequenceNumber(
+            dbname_prefix,
+            settings.connectName.main,
+            { collection, username },
             data,
             options);
     }
 
-
-    update(dbname_prefix, dbname, collection,username, filter, data, options) {
-        return MongoDBInterface.update(dbname_prefix, dbname, {collection,username}, filter, data, options);
+    // ============ UPDATE METHODS ============
+    update(dbname_prefix, dbname, collection, username, filter, data, options) {
+        return MongoDBInterface.update(dbname_prefix, dbname, { collection, username }, filter, data, options);
     }
 
-    update_onManagement(dbname_prefix, collection,username, filter, data, options) {
-        return MongoDBInterface.update(dbname_prefix, settings.connectName.management, {collection,username}, filter, data, options);
+    updateMain(dbname_prefix, collection, username, filter, data, options) {
+        return MongoDBInterface.update(dbname_prefix, settings.connectName.main, { collection, username }, filter, data, options);
     }
 
-    update_onManagement_with_cache(dbname_prefix, collection,username, filter, data, options) {
-        return MongoDBInterface.update_with_cache(dbname_prefix, settings.connectName.management, {collection,username}, filter, data, options);
+    updateMainWithCache(dbname_prefix, collection, username, filter, data, options) {
+        return MongoDBInterface.update_with_cache(dbname_prefix, settings.connectName.main, { collection, username }, filter, data, options);
     }
 
-
-    update_onOffice(dbname_prefix, collection,username, filter, data, options) {
-        return MongoDBInterface.update(dbname_prefix, settings.connectName.office, {collection,username}, filter, data, options);
+    // ============ DELETE METHODS ============
+    delete(dbname_prefix, dbname, collection, username, filter, options) {
+        return MongoDBInterface.delete(dbname_prefix, dbname, { collection, username }, filter, options);
     }
 
-    update_onOffice_with_cache(dbname_prefix, collection,username, filter, data, options) {
-        return MongoDBInterface.update_with_cache(dbname_prefix, settings.connectName.office, {collection,username}, filter, data, options);
+    deleteMain(dbname_prefix, collection, username, filter, options) {
+        return MongoDBInterface.delete(dbname_prefix, settings.connectName.main, { collection, username }, filter, options);
     }
 
-
-    delete(dbname_prefix, dbname, collection,username, filter, options) {
-        return MongoDBInterface.delete(dbname_prefix, dbname, {collection,username}, filter, options);
+    deleteMainWithCache(dbname_prefix, collection, username, filter, options) {
+        return MongoDBInterface.delete_with_cache(dbname_prefix, settings.connectName.main, { collection, username }, filter, options);
     }
 
-    delete_onManagement(dbname_prefix, collection,username, filter, options) {
-        return MongoDBInterface.delete(dbname_prefix, settings.connectName.management, {collection,username}, filter, options);
+    // ============ RESTORE METHOD ============
+    restore(dbname_prefix, dbname, collection, username, data, options) {
+        return MongoDBInterface.restore(dbname_prefix, dbname, { collection, username }, data, options);
     }
 
-    delete_onManagement_with_cache(dbname_prefix, collection,username, filter, options) {
-        return MongoDBInterface.delete_with_cache(dbname_prefix, settings.connectName.management, {collection,username}, filter, options);
+    // ============ INDEX METHODS ============
+    createIndex(dbname_prefix, dbname, collection, keys, type) {
+        return MongoDBInterface.createIndex(dbname_prefix, dbname, collection, keys, type);
     }
 
-
-    delete_onOffice(dbname_prefix, collection,username, filter, options) {
-        return MongoDBInterface.delete(dbname_prefix, settings.connectName.office, {collection,username}, filter, options);
+    createIndexMain(dbname_prefix, collection, keys, type) {
+        return MongoDBInterface.createIndex(dbname_prefix, settings.connectName.main, collection, keys, type);
     }
 
-    delete_onOffice_with_cache(dbname_prefix, collection,username, filter, options) {
-        return MongoDBInterface.delete_with_cache(dbname_prefix, settings.connectName.office, {collection,username}, filter, options);
+    removeIndex(dbname_prefix, dbname, collection, filter) {
+        return MongoDBInterface.removeIndex(dbname_prefix, dbname, collection, filter);
     }
 
-    createIndex_onManagement(dbname_prefix, collection, keys, type) {
-        return MongoDBInterface.createIndex(dbname_prefix, settings.connectName.management, collection, keys, type);
+    removeIndexMain(dbname_prefix, collection, filter) {
+        return MongoDBInterface.removeIndex(dbname_prefix, settings.connectName.main, collection, filter);
     }
 
-    createIndex_onBasic(dbname_prefix, collection, keys, type) {
-        return MongoDBInterface.createIndex(dbname_prefix, settings.connectName.basic, collection, keys, type);
-    }
-
-    createIndex_onOffice(dbname_prefix, collection, keys, type) {
-        return MongoDBInterface.createIndex(dbname_prefix, settings.connectName.office, collection, keys, type);
-    }
-
-    removeIndex_onManagement(dbname_prefix, collection, filter) {
-        return MongoDBInterface.removeIndex(dbname_prefix, settings.connectName.management, collection, filter);
-    }
-
-    removeIndex_onBasic(dbname_prefix, collection, filter) {
-        return MongoDBInterface.removeIndex(dbname_prefix, settings.connectName.basic, collection, filter);
-    }
-
-    removeIndex_onOffice(dbname_prefix, collection, filter) {
-        return MongoDBInterface.removeIndex(dbname_prefix, settings.connectName.office, collection, filter);
-    }
-
-
+    // ============ COLLECTION METHODS ============
     createCollection(dbname_prefix, dbname, name) {
         return MongoDBInterface.createCollection(dbname_prefix, dbname, name);
     }
 
-    createCollection_onManagement(dbname_prefix, name) {
-        return MongoDBInterface.createCollection(dbname_prefix, settings.connectName.management, name);
+    createCollectionMain(dbname_prefix, name) {
+        return MongoDBInterface.createCollection(dbname_prefix, settings.connectName.main, name);
     }
 
-    createCollection_onBasic(dbname_prefix, name) {
-        return MongoDBInterface.createCollection(dbname_prefix, settings.connectName.basic, name);
+    listCollection(dbname_prefix, dbname) {
+        return MongoDBInterface.listCollection(dbname_prefix, dbname);
     }
 
-    createCollection_onOffice(dbname_prefix, name) {
-        return MongoDBInterface.createCollection(dbname_prefix, settings.connectName.office, name);
+    listCollectionMain(dbname_prefix) {
+        return MongoDBInterface.listCollection(dbname_prefix, settings.connectName.main);
     }
 
-    listCollection_onManagement(dbname_prefix) {
-        return MongoDBInterface.listCollection(dbname_prefix, settings.connectName.management);
-    }
-
-    listCollection_onBasic(dbname_prefix) {
-        return MongoDBInterface.listCollection(dbname_prefix, settings.connectName.basic);
-    }
-
-    listCollection_onOffice(dbname_prefix) {
-        return MongoDBInterface.listCollection(dbname_prefix, settings.connectName.office);
-    }
-
+    // ============ TRANSACTION METHODS ============
     executeTransaction(exeFunc) {
         return MongoDBInterface.executeTransaction(exeFunc);
     }
 
-    getAutoIncrementNumber_onManagement(dbname_prefix, key) {
+    // ============ AUTO INCREMENT METHODS ============
+    getAutoIncrementNumber(dbname_prefix, key) {
         return MongoDBInterface.autonumber(
             dbname_prefix,
-            'management',
+            settings.connectName.main,
             key,
         );
     }
 
-    getAutoIncrementNumberDaily_onManagement(dbname_prefix, key) {
+    getAutoIncrementNumberDaily(dbname_prefix, key) {
         return MongoDBInterface.autonumberDaily(
             dbname_prefix,
-            'management',
+            settings.connectName.main,
             key,
         );
     }
+
 }
 
 exports.MongoDBProvider = new MongoDBProvider();

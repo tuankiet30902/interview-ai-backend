@@ -108,7 +108,7 @@ const generateData = async function (dbname_prefix,dataUser, dataGroup, departme
 
 const loadData = function (dbname_prefix, username) {
     let dfd = q.defer();
-    MongoDBProvider.load_onManagement(dbname_prefix, 'user', { username: { $eq: username } })
+    MongoDBProvider.loadMain(dbname_prefix, 'user', { username: { $eq: username } })
         .then((response) => {
             if (!response[0]) {
                 return dfd.reject({ path: 'SessionProvider.loadData.UserNameIsNotExist', mes: 'UserNameIsNotExist' });
@@ -117,7 +117,7 @@ const loadData = function (dbname_prefix, username) {
 
             let employeePromise;
             if (user.employee) {
-                employeePromise = MongoDBProvider.load_onOffice(dbname_prefix, 'employee', {
+                employeePromise = MongoDBProvider.loadMain(dbname_prefix, 'employee', {
                     _id: { $eq: new require('mongodb').ObjectID(user.employee.toString()) },
                 });
             } else {
@@ -137,7 +137,7 @@ const loadData = function (dbname_prefix, username) {
             return q.all([
                 user,
                 employeePromise,
-                MongoDBProvider.load_onManagement(dbname_prefix, 'group', groupFilter, 5000, 0, { _id: -1 }),
+                MongoDBProvider.loadMain(dbname_prefix, 'group', groupFilter, 5000, 0, { _id: -1 }),
                 organizationPromise
             ]);
         })
@@ -160,29 +160,29 @@ class SessionProvider {
     constructor() {
     }
     get(dbname_prefix,username) {
-        return SessionInterface.get(generateDBname(dbname_prefix,connectName.management), username);
+        return SessionInterface.get(generateDBname(dbname_prefix,connectName.main), username);
     }
 
     set(dbname_prefix,username, data) {
-        return SessionInterface.set(generateDBname(dbname_prefix,connectName.management), username, data);
+        return SessionInterface.set(generateDBname(dbname_prefix,connectName.main), username, data);
     }
 
     del(dbname_prefix,username) {
-        return SessionInterface.del(generateDBname(dbname_prefix,connectName.management), username);
+        return SessionInterface.del(generateDBname(dbname_prefix,connectName.main), username);
     }
 
     clear(dbname_prefix) {
-        return SessionInterface.clear(generateDBname(dbname_prefix,connectName.management));
+        return SessionInterface.clear(generateDBname(dbname_prefix,connectName.main));
     }
 
     ensure(dbname_prefix,username) {
         let dfd = q.defer();
 
-        SessionInterface.get(generateDBname(dbname_prefix, connectName.management), username).then(function (res) {
+        SessionInterface.get(generateDBname(dbname_prefix, connectName.main), username).then(function (res) {
             if (!res.department_details || typeof res.department_details !== 'object') {
                 loadData(dbname_prefix,username).then(function (data) {
 
-                    SessionInterface.set(generateDBname(dbname_prefix,connectName.management), username, data);
+                    SessionInterface.set(generateDBname(dbname_prefix,connectName.main), username, data);
                     dfd.resolve(data);
                     data = undefined;
                     username = undefined;
@@ -197,7 +197,7 @@ class SessionProvider {
         }, function (err) {
 
             loadData(dbname_prefix,username).then(function (data) {
-                SessionInterface.set(generateDBname(dbname_prefix,connectName.management), username, data);
+                SessionInterface.set(generateDBname(dbname_prefix,connectName.main), username, data);
                 dfd.resolve(data);
                 data = undefined;
                 username = undefined;

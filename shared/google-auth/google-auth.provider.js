@@ -15,10 +15,6 @@ class GoogleAuthProvider {
         this.scope = googleAuthConst.scope;
     }
 
-    /**
-     * Generate Google OAuth authorization URL
-     * @returns {string} Authorization URL
-     */
     getAuthUrl() {
         try {
             if (!this.clientId || this.clientId === '') {
@@ -49,11 +45,6 @@ class GoogleAuthProvider {
         }
     }
 
-    /**
-     * Exchange authorization code for access token
-     * @param {string} code - Authorization code from Google
-     * @returns {Promise<Object>} Token response with access_token, refresh_token, etc.
-     */
     async getTokenFromCode(code) {
         try {
             // Validate configuration
@@ -102,11 +93,6 @@ class GoogleAuthProvider {
         }
     }
 
-    /**
-     * Get user information from Google using access token
-     * @param {string} accessToken - Google access token
-     * @returns {Promise<Object>} User information (id, email, name, picture, etc.)
-     */
     async getUserInfo(accessToken) {
         try {
             const response = await axios.get(this.userInfoUrl, {
@@ -127,17 +113,11 @@ class GoogleAuthProvider {
         }
     }
 
-    /**
-     * Complete Google OAuth flow: get token and user info
-     * @param {string} code - Authorization code from Google
-     * @returns {Promise<Object>} User information and tokens
-     */
+
     async authenticate(code) {
         try {
-            // Step 1: Exchange code for token
             const tokenData = await this.getTokenFromCode(code);
 
-            // Step 2: Get user info using access token
             const userInfo = await this.getUserInfo(tokenData.access_token);
 
             return {
@@ -152,7 +132,6 @@ class GoogleAuthProvider {
         } catch (error) {
             console.error('Error in Google authentication:', error);
 
-            // Log detailed error to file for debugging
             try {
                 const logPath = path.join(process.cwd(), 'google_auth_error.log');
                 const timestamp = new Date().toISOString();

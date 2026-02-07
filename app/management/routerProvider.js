@@ -1,6 +1,5 @@
 module.exports =[
     {path:"/management/user",router:require('./user/user.router')},
-    {path:"/management/admin",router:require('./admin/admin.router')},
     {path:"/management/setup",router:require('./services/setup.router')},
     {path:"/management/system",router:require('./services/system.router')},
     {path:"/management/localization",router:require('./localization/localization.router')},

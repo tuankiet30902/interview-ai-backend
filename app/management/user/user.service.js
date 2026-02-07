@@ -9,7 +9,7 @@ const settings = require('../../../utils/setting');
 const { removeUnicode } = require('../../../utils/util');
 const { SocketProvider } = require('./../../../shared/socket/provider');
 const folderArray = ['management', 'user']
-const { ItemSetup } = require('../../../shared/setup/items.const');
+// Đã xóa ItemSetup - không còn sử dụng setup
 const { FileProvider } = require('../../../shared/file/file.provider');
 const { GoogleAuthProvider } = require('../../../shared/google-auth/google-auth.provider');
 
@@ -19,31 +19,31 @@ class UserService {
     constructor() { }
 
     setup_mfa(dbname_prefix, username, mfa_secret) {
-        return MongoDBProvider.update_onManagement(dbname_prefix, "user", username,
+        return MongoDBProvider.updateMain(dbname_prefix, "user", username,
             { username: { $eq: username } },
             { $set: { mfa_secret, has_mfa: false } });
     }
 
     mark_mfa(dbname_prefix, username) {
-        return MongoDBProvider.update_onManagement(dbname_prefix, "user", username,
+        return MongoDBProvider.updateMain(dbname_prefix, "user", username,
             { username: { $eq: username } },
             { $set: { has_mfa: true } });
     }
 
     loadUserForAddFriend(dbname_prefix, username, search) {
         let dfd = q.defer();
-        MongoDBProvider.load_onManagement(dbname_prefix, "user", { $text: { $search: search } }, 48, 0, { title: -1 }).then(function (data) {
+        MongoDBProvider.loadMain(dbname_prefix, "user", { $text: { $search: search } }, 48, 0, { title: -1 }).then(function (data) {
             let usernameAr = [];
             for (var i in data) {
                 usernameAr.push(data[i].username);
             }
             let dfdAr = [];
-            dfdAr.push(MongoDBProvider.load_onBasic(dbname_prefix, "add_friend",
+            dfdAr.push(MongoDBProvider.loadMain(dbname_prefix, "add_friend",
                 {
                     $and: [{ username: { $eq: username } },
                     { friend: { $in: usernameAr } }]
                 }));
-            dfdAr.push(MongoDBProvider.load_onBasic(dbname_prefix, "request_add_friend",
+            dfdAr.push(MongoDBProvider.loadMain(dbname_prefix, "request_add_friend",
                 {
                     $and: [{ username: { $eq: username } }, { friend: { $in: usernameAr } }]
                 }));
@@ -72,7 +72,7 @@ class UserService {
     }
 
     checkExists(dbname_prefix, username, password) {
-        return MongoDBProvider.load_onManagement(dbname_prefix, "user", {
+        return MongoDBProvider.loadMain(dbname_prefix, "user", {
             $and: [
                 { username: { $eq: username } },
                 { password: { $eq: password } },
@@ -82,7 +82,7 @@ class UserService {
     }
 
     changePassword(dbname_prefix, username, password, newPassword) {
-        return MongoDBProvider.update_onManagement(dbname_prefix, "user", username
+        return MongoDBProvider.updateMain(dbname_prefix, "user", username
             , {
                 $and: [
                     { username: { $eq: username } },
@@ -95,7 +95,7 @@ class UserService {
     }
 
     changeLanguage(dbname_prefix, username, key) {
-        return MongoDBProvider.update_onManagement(dbname_prefix, "user", username
+        return MongoDBProvider.updateMain(dbname_prefix, "user", username
             , {
                 username: { $eq: username }
             }, {
@@ -104,12 +104,12 @@ class UserService {
     }
 
     changeTheme(dbname_prefix, username, theme) {
-        return MongoDBProvider.update_onManagement(dbname_prefix, "user", username, { username: { $eq: username } }, { $set: { "theme": theme } });
+        return MongoDBProvider.updateMain(dbname_prefix, "user", username, { username: { $eq: username } }, { $set: { "theme": theme } });
     }
 
     checkExist(dbname_prefix, username) {
         let dfd = q.defer();
-        MongoDBProvider.load_onManagement(dbname_prefix, "user", { username: { $eq: username } }).then(function (res) {
+        MongoDBProvider.loadMain(dbname_prefix, "user", { username: { $eq: username } }).then(function (res) {
             if (res[0]) {
                 dfd.resolve(false);
             } else {
@@ -127,22 +127,22 @@ class UserService {
         if (systemUsername.indexOf(account) != -1) {
             dfd.reject({ path: "UserService.insert.CantCreateAccountWithSystemUsername", mes: "CantCreateAccountWithSystemUsername" });
         } else {
-            MongoDBProvider.load_onManagement(dbname_prefix, "user", { username: { $eq: account } }, 1, 0).then(function (check_data) {
+            MongoDBProvider.loadMain(dbname_prefix, "user", { username: { $eq: account } }, 1, 0).then(function (check_data) {
                 if (check_data[0]) {
                     dfd.reject({ path: "UserService.insert.UserIsExists", mes: "UserIsExists" });
                 } else {
-                    MongoDBProvider.insert_onOffice(dbname_prefix, "employee", username,
+                    MongoDBProvider.insertMain(dbname_prefix, "employee", username,
                         { fullname: title, department, competence: "Staff", update_mission_general: true }).then(function (e) {
                             let dfdAr = [];
 
-                            dfdAr.push(MongoDBProvider.insert_onManagement(dbname_prefix, "user", username,
+                            dfdAr.push(MongoDBProvider.insertMain(dbname_prefix, "user", username,
                                 {
                                     username: account, title, title_search: removeUnicode(title),
                                     password, language, isactive, rule: [{ rule: "Authorized" }], role: [],
                                     employee: e.ops[0]._id.toString(),
                                     department
                                 }));
-                            dfdAr.push(MongoDBProvider.insert_onBasic(dbname_prefix, "room", username, { name: account, members: [account] }));
+                            dfdAr.push(MongoDBProvider.insertMain(dbname_prefix, "room", username, { name: account, members: [account] }));
                             q.all(dfdAr).then(function () {
                                 dfd.resolve(true);
                             }, function (err) {
@@ -173,17 +173,17 @@ class UserService {
             dfd.reject({ path: "UserService.registerPublic.CantCreateAccountWithSystemUsername", mes: "CantCreateAccountWithSystemUsername" });
         } else {
             // Check if user exists
-            MongoDBProvider.load_onManagement(dbname_prefix, "user", { username: { $eq: account } }, 1, 0).then(function (check_data) {
+            MongoDBProvider.loadMain(dbname_prefix, "user", { username: { $eq: account } }, 1, 0).then(function (check_data) {
                 if (check_data[0]) {
                     dfd.reject({ path: "UserService.registerPublic.UserIsExists", mes: "UserIsExists" });
                 } else {
                     // Create employee record first
-                    MongoDBProvider.insert_onOffice(dbname_prefix, "employee", username,
+                    MongoDBProvider.insertMain(dbname_prefix, "employee", username,
                         { fullname: title, department, competence: "Staff", update_mission_general: true }).then(function (e) {
                             let dfdAr = [];
 
                             // Create user record
-                            dfdAr.push(MongoDBProvider.insert_onManagement(dbname_prefix, "user", username,
+                            dfdAr.push(MongoDBProvider.insertMain(dbname_prefix, "user", username,
                                 {
                                     username: account,
                                     email: email,
@@ -200,7 +200,7 @@ class UserService {
                                 }));
 
                             // Create personal room
-                            dfdAr.push(MongoDBProvider.insert_onBasic(dbname_prefix, "room", username, { name: account, members: [account] }));
+                            dfdAr.push(MongoDBProvider.insertMain(dbname_prefix, "room", username, { name: account, members: [account] }));
 
                             q.all(dfdAr).then(function () {
                                 dfd.resolve(true);
@@ -231,10 +231,10 @@ class UserService {
                 return;
             }
 
-            MongoDBProvider.load_onManagement(dbname_prefix, "user", { username: { $eq: email } }, 1, 0)
+            MongoDBProvider.loadMain(dbname_prefix, "user", { username: { $eq: email } }, 1, 0)
                 .then(function (users) {
                     if (users && users[0]) {
-                        return MongoDBProvider.update_onManagement(
+                        return MongoDBProvider.updateMain(
                             dbname_prefix,
                             "user",
                             email,
@@ -242,7 +242,7 @@ class UserService {
                             { $set: { avatar_url: googleUser.picture || null } }
                         ).catch(function () { })
                             .then(function () {
-                                return MongoDBProvider.getOne_onManagement(dbname_prefix, "user", { username: { $eq: email } });
+                                return MongoDBProvider.getOneMain(dbname_prefix, "user", { username: { $eq: email } });
                             })
                             .then(function (user) {
                                 dfd.resolve({ user: user, isNewUser: false });
@@ -254,7 +254,7 @@ class UserService {
                     const passwordPlain = Math.random().toString(36).slice(-16) + Math.random().toString(36).slice(-16);
                     const password = AuthenticationProvider.encrypt_oneDirection_lv1(passwordPlain);
 
-                    return MongoDBProvider.insert_onOffice(dbname_prefix, "employee", email, {
+                    return MongoDBProvider.insertMain(dbname_prefix, "employee", email, {
                         fullname: title,
                         department: "Public",
                         competence: "Staff",
@@ -262,7 +262,7 @@ class UserService {
                     }).then(function (e) {
                         const employeeId = e && e.ops && e.ops[0] ? e.ops[0]._id.toString() : null;
 
-                        return MongoDBProvider.insert_onManagement(dbname_prefix, "user", email, {
+                        return MongoDBProvider.insertMain(dbname_prefix, "user", email, {
                             username: email,
                             email: email,
                             title: title,
@@ -278,7 +278,7 @@ class UserService {
                             avatar_url: googleUser.picture || null
                         });
                     }).then(function () {
-                        return MongoDBProvider.getOne_onManagement(dbname_prefix, "user", { username: { $eq: email } });
+                        return MongoDBProvider.getOneMain(dbname_prefix, "user", { username: { $eq: email } });
                     }).then(function (user) {
                         dfd.resolve({ user: user, isNewUser: true });
                     });
@@ -298,7 +298,7 @@ class UserService {
         let dfd = q.defer();
         let dfdAr = [];
 
-        MongoDBProvider.load_onManagement(dbname_prefix, "user", { username: { $eq: username } }, 1).then(function (userArray) {
+        MongoDBProvider.loadMain(dbname_prefix, "user", { username: { $eq: username } }, 1).then(function (userArray) {
             if (userArray[0]) {
                 let res = userArray[0];
                 dfdAr.push(
@@ -397,7 +397,7 @@ class UserService {
 
         let dfd = q.defer();
         let dfdArr = [];
-        MongoDBProvider.load_onManagement(dbname_prefix, 'user', filter, top, offset, sort, {
+        MongoDBProvider.loadMain(dbname_prefix, 'user', filter, top, offset, sort, {
             _id: true,
             username: true,
             title: true,
@@ -422,19 +422,12 @@ class UserService {
                         };
                     }
 
-                    if (data[i].competence) {
-                        let itemCompetence = ItemSetup.getItems('management', 'directory');
-                        for (var j in itemCompetence) {
-                            if (itemCompetence[j].master_key === 'competence' && itemCompetence[j].value === data[i].competence) {
-                                data[i].competence = itemCompetence[j];
-                                break;
-                            }
-                        }
-                    }
+                    // Đã xóa logic ItemSetup.getItems - không còn sử dụng setup
+                    // Giữ nguyên giá trị competence như hiện tại
 
                     if (data[i].department) {
                         dfdArr.push(
-                            MongoDBProvider.load_onOffice(dbname_prefix, "organization", { id: data[i].department }, undefined, undefined, { ordernumber: 1 })
+                            MongoDBProvider.loadMain(dbname_prefix, "organization", { id: data[i].department }, undefined, undefined, { ordernumber: 1 })
                         );
                     }
                 }
@@ -502,17 +495,17 @@ class UserService {
     }
 
     countUser(dbname_prefix, filter) {
-        return MongoDBProvider.count_onManagement(dbname_prefix, "user", filter);
+        return MongoDBProvider.countMain(dbname_prefix, "user", filter);
     }
 
     update(dbname_prefix, username, id, title, isactive, role) {
-        return MongoDBProvider.update_onManagement(dbname_prefix, "user", username,
+        return MongoDBProvider.updateMain(dbname_prefix, "user", username,
             { _id: { $eq: new require('mongodb').ObjectID(id) } },
             { $set: { title, title_search: removeUnicode(title), isactive, role } });
     }
 
     delete(dbname_prefix, id, username) {
-        return MongoDBProvider.delete_onManagement(dbname_prefix, "user", username,
+        return MongoDBProvider.deleteMain(dbname_prefix, "user", username,
             {
                 $and: [{ _id: { $eq: new require('mongodb').ObjectID(id) } },
                 { isactive: { $ne: true } }]
@@ -522,12 +515,12 @@ class UserService {
 
     pushRule(dbname_prefix, username, id, rule) {
         let dfd = q.defer();
-        MongoDBProvider.update_onManagement(dbname_prefix, "user", username,
+        MongoDBProvider.updateMain(dbname_prefix, "user", username,
             { _id: { $eq: new require('mongodb').ObjectID(id) } },
             {
                 $pull: { rule: { rule: { $eq: rule.rule } } }
             }).then(function () {
-                MongoDBProvider.update_onManagement(dbname_prefix, "user", username,
+                MongoDBProvider.updateMain(dbname_prefix, "user", username,
                     { _id: { $eq: new require('mongodb').ObjectID(id) } },
                     {
                         $push: { rule: rule }
@@ -543,16 +536,16 @@ class UserService {
     }
 
     removeRule(dbname_prefix, username, id, rule) {
-        return MongoDBProvider.update_onManagement(dbname_prefix, "user", username,
+        return MongoDBProvider.updateMain(dbname_prefix, "user", username,
             { _id: { $eq: new require('mongodb').ObjectID(id) } }, { $pull: { rule: { rule: rule.rule } } });
     }
 
     loadDetails(dbname_prefix, account) {
-        return MongoDBProvider.getOne_onManagement(dbname_prefix, "user", { username: { $eq: account } });
+        return MongoDBProvider.getOneMain(dbname_prefix, "user", { username: { $eq: account } });
     }
 
     updateAvatar(dbname_prefix, username, avatar) {
-        return MongoDBProvider.update_onManagement(dbname_prefix, "user", username,
+        return MongoDBProvider.updateMain(dbname_prefix, "user", username,
             { username: { $eq: username } },
             { $set: { avatar } });
     }
@@ -561,7 +554,7 @@ class UserService {
         let myPassword = settings.defaultPassword;
         myPassword = AuthenticationProvider.encrypt_oneDirection_lv1(myPassword);
         let d = new Date();
-        return MongoDBProvider.update_onManagement(dbname_prefix, "user", username,
+        return MongoDBProvider.updateMain(dbname_prefix, "user", username,
             { username: { $eq: account } },
             {
                 $set: { password: myPassword },
@@ -570,24 +563,24 @@ class UserService {
     }
 
     getFriend(dbname_prefix, username) {
-        return MongoDBProvider.load_onBasic(dbname_prefix, 'add_friend', { friend: { $eq: username } },
+        return MongoDBProvider.loadMain(dbname_prefix, 'add_friend', { friend: { $eq: username } },
             5000, 0, { count: -1 });
     }
 
     loadByEmployeeIds(dbname_prefix, employeeIds) {
-        return MongoDBProvider.load_onManagement(dbname_prefix, "user", { employee: { $in: employeeIds } });
+        return MongoDBProvider.loadMain(dbname_prefix, "user", { employee: { $in: employeeIds } });
     }
 
     loadByDepartmentIds(dbname_prefix, departmentIds) {
-        return MongoDBProvider.load_onManagement(dbname_prefix, "user", { department: { $in: departmentIds } });
+        return MongoDBProvider.loadMain(dbname_prefix, "user", { department: { $in: departmentIds } });
     }
 
     loadByRole(dbname_prefix, role) {
-        return MongoDBProvider.load_onManagement(dbname_prefix, "user", { role: { $eq: role } });
+        return MongoDBProvider.loadMain(dbname_prefix, "user", { role: { $eq: role } });
     }
 
     increaseOCRProcessed(dbname_prefix, username) {
-        return MongoDBProvider.update_onManagement(
+        return MongoDBProvider.updateMain(
             dbname_prefix,
             "user",
             username,
@@ -597,7 +590,7 @@ class UserService {
     }
 
     updateStorageUsage(dbname_prefix, username, storageUsage) {
-        return MongoDBProvider.update_onManagement(
+        return MongoDBProvider.updateMain(
             dbname_prefix,
             "user",
             username,

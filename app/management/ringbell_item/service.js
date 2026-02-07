@@ -77,7 +77,7 @@ class RingBellItemService {
     constructor() { }
 
     loadList(dbname_prefix, username, filter, top, offset) {
-        return MongoDBProvider.load_onManagement(dbname_prefix,
+        return MongoDBProvider.loadMain(dbname_prefix,
             "ringbell_item",
             filter,
             top, offset,
@@ -89,7 +89,7 @@ class RingBellItemService {
     }
 
     countList(dbname_prefix, username) {
-        return MongoDBProvider.count_onManagement(dbname_prefix,
+        return MongoDBProvider.countMain(dbname_prefix,
             "ringbell_item",
             {
                 $and: [{
@@ -101,7 +101,7 @@ class RingBellItemService {
     }
 
     countAll(dbname_prefix, filter) {
-        return MongoDBProvider.count_onManagement(dbname_prefix,
+        return MongoDBProvider.countMain(dbname_prefix,
             "ringbell_item",
             filter);
     }
@@ -147,7 +147,7 @@ class RingBellItemService {
             }
         }
 
-        MongoDBProvider.load_onManagement(
+        MongoDBProvider.loadMain(
             dbname_prefix,
             "ringbell_item",
             filter,
@@ -178,7 +178,7 @@ class RingBellItemService {
         const toUsernameArray = Array.isArray(to_username) ? to_username : (to_username ? [to_username] : []);
 
         console.log(`[RingBellItemService.insert] Starting insert for action ${action}, to_username:`, toUsernameArray);
-        MongoDBProvider.insert_onManagement(dbname_prefix, "ringbell_item", username,
+        MongoDBProvider.insertMain(dbname_prefix, "ringbell_item", username,
             { action, params, to_username: toUsernameArray, seen: seenArray, from_action, notify_time, to_students })
             .then(function(result) {
                 console.log(`[RingBellItemService.insert] ✅ MongoDB insert successful for action ${action}`);
@@ -211,13 +211,13 @@ class RingBellItemService {
 
 
     seen(dbname_prefix, username, id) {
-        return MongoDBProvider.update_onManagement(dbname_prefix, "ringbell_item", username,
+        return MongoDBProvider.updateMain(dbname_prefix, "ringbell_item", username,
             { _id: { $eq: new require('mongodb').ObjectID(id) } },
             { $addToSet: { seen: username } });
     }
 
     seenAll(dbname_prefix, username) {
-        return MongoDBProvider.update_onManagement(dbname_prefix, "ringbell_item", username,
+        return MongoDBProvider.updateMain(dbname_prefix, "ringbell_item", username,
             {
                 $and: [
                     { seen: { $nin: [username] } },

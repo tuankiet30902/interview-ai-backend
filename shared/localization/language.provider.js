@@ -20,7 +20,7 @@ class LanguageProvider {
 
     getLanguageListConfig(dbname_prefix) {
         let dfd = q.defer();
-        MongoDBProvider.load_onManagement(dbname_prefix,
+        MongoDBProvider.loadMain(dbname_prefix,
             MongoDBConst.nameCollection.language,{}).then(function (data) {
             dfd.resolve(data);
             data = undefined;
@@ -35,7 +35,7 @@ class LanguageProvider {
     getLanguageDetailsConfig(dbname_prefix,key) {
         let dfd = q.defer();
   
-        MongoDBProvider.load_onManagement(dbname_prefix,
+        MongoDBProvider.loadMain(dbname_prefix,
             MongoDBConst.nameCollection.language,{ key: { $eq: key } }).then(function (data) {
             if (data[0]) {
                 dfd.resolve(data[0].items);
@@ -56,7 +56,7 @@ class LanguageProvider {
         let dfd = q.defer();
 
 
-        MongoDBProvider.load_onManagement(dbname_prefix,
+        MongoDBProvider.loadMain(dbname_prefix,
             MongoDBConst.nameCollection.language,{ },1).then(function (data) {
             if (data[0] && data[0].language && data[0].language.default) {
                 dfd.resolve(data[0].language.default);

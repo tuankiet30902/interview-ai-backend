@@ -29,7 +29,7 @@ class SettingService {
 
     loadGeneral(dbname_prefix) {
         let dfd = q.defer();
-        MongoDBProvider.load_onManagement(dbname_prefix, "setting", { group: { $eq: "general" } }).then(function (data) {
+        MongoDBProvider.loadMain(dbname_prefix, "setting", { group: { $eq: "general" } }).then(function (data) {
             let dfdArray = [];
             for (var i in data) {
                 dfdArray.push(generateConfigFileSetting(dbname_prefix, data[i]));
@@ -48,14 +48,14 @@ class SettingService {
     }
 
     loadModule(dbname_prefix, module) {
-        return MongoDBProvider.load_onManagement(dbname_prefix, "setting", { module: { $eq: module } });
+        return MongoDBProvider.loadMain(dbname_prefix, "setting", { module: { $eq: module } });
     }
 
     update(dbname_prefix, username, itemAr) {
         let dfd = q.defer();
         let dfdAr = [];
         for (var i in itemAr) {
-            dfdAr.push(MongoDBProvider.update_onManagement(dbname_prefix, "setting", username,
+            dfdAr.push(MongoDBProvider.updateMain(dbname_prefix, "setting", username,
                 { _id: { $eq: new require('mongodb').ObjectID(itemAr[i].id) } },
                 { $set: { value: itemAr[i].value } }));
         }
@@ -69,13 +69,13 @@ class SettingService {
 
     updateImage(dbname_prefix, username, id, image) {
 
-        return MongoDBProvider.update_onManagement(dbname_prefix, "setting", username,
+        return MongoDBProvider.updateMain(dbname_prefix, "setting", username,
             { _id: { $eq: new require('mongodb').ObjectID(id) } },
             { $set: { value: image } });
     }
 
     updateImageAndRecoverRecords(dbname_prefix, username, id, image, recoverRecord) {
-        return MongoDBProvider.update_onManagement(dbname_prefix, "setting", username,
+        return MongoDBProvider.updateMain(dbname_prefix, "setting", username,
             { _id: { $eq: new require('mongodb').ObjectID(id) } },
             {
                 $set: { value: image },
@@ -86,7 +86,7 @@ class SettingService {
 
     getcurrentValueSetting(dbname_prefix, key) {
         let dfd = q.defer();
-        MongoDBProvider.load_onManagement(dbname_prefix, "setting",
+        MongoDBProvider.loadMain(dbname_prefix, "setting",
             { _id: { $eq: new require('mongodb').ObjectID(key.toString()) } }).then(function (data) {
                 dfd.resolve(data);
             }, function (err) {
@@ -97,7 +97,7 @@ class SettingService {
 
     getCurrentValueByKey(dbname_prefix, key) {
         let dfd = q.defer();
-        MongoDBProvider.load_onManagement(dbname_prefix, "setting", { key: { $eq: key } }).then(
+        MongoDBProvider.loadMain(dbname_prefix, "setting", { key: { $eq: key } }).then(
             function (data) {
                 if (data.length === 0) {
                     return dfd.resolve(null);
